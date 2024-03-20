@@ -22,8 +22,6 @@ module "network" {
 
   create_cluster_subnets = local.create_cluster_subnets
   cluster_subnet_cidrs   = var.cluster_subnet_cidrs
-
-  pod_spread_policy = var.pod_spread_policy
 }
 
 ################################################################################
@@ -68,6 +66,4 @@ module "cluster" {
 
   kubernetes_cluster_auth_mode  = var.kubernetes_cluster_auth_mode
   kubernetes_cluster_admin_arns = var.kubernetes_cluster_admin_arns
-
-  pod_spread_policy = var.pod_spread_policy
 }
