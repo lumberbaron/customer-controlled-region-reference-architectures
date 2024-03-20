@@ -20,8 +20,14 @@ variable "create_network" {
 
 variable "vpc_cidr" {
   type        = string
-  default     = ""
+  default     = null
   description = "The CIDR of the cluster's VPC."
+}
+
+variable "vpc_secondary_cidrs" {
+  type        = list(string)
+  default     = null
+  description = "The secondary CIDRs of the cluster's VPC."
 }
 
 variable "public_subnet_cidrs" {
@@ -33,7 +39,13 @@ variable "public_subnet_cidrs" {
 variable "private_subnet_cidrs" {
   type        = list(string)
   default     = []
-  description = "The CIDRs of the three private subnets. These will contain the EKS cluster's master ENIs, worker nodes, and internal load-balancer ENIs (if desired)."
+  description = "The CIDRs of the three private subnets. These will contain internal load-balancer ENIs (if desired). By default, these will also contain the EKS cluster's ENIs and worker nodes."
+}
+
+variable "cluster_subnet_cidrs" {
+  type        = list(string)
+  default     = null
+  description = "The CIDRs of the three cluster subnets, if desired. These will contain the EKS cluster's ENIs and worker nodes."
 }
 
 variable "vpc_id" {
@@ -46,6 +58,12 @@ variable "private_subnet_ids" {
   type        = list(string)
   default     = []
   description = "When 'create_network' is set to false, the private subnet IDs must be provided."
+}
+
+variable "cluster_subnet_ids" {
+  type        = list(string)
+  default     = null
+  description = "When 'create_network' is set to false, the cluster subnet IDs must be provided if they are to be used."
 }
 
 ################################################################################

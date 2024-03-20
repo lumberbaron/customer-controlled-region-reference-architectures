@@ -1,3 +1,9 @@
+locals {
+  create_cluster_subnets = var.create_network ? var.cluster_subnet_cidrs != null : var.cluster_subnet_ids != null
+  private_subnet_ids     = var.create_network ? module.network.private_subnets : var.private_subnet_ids
+  cluster_subnet_ids     = var.create_network ? module.network.cluster_subnets : var.cluster_subnet_ids
+}
+
 ################################################################################
 # Network
 ################################################################################
@@ -8,9 +14,14 @@ module "network" {
   cluster_name   = var.cluster_name
   create_network = var.create_network
 
-  vpc_cidr             = var.vpc_cidr
+  vpc_cidr            = var.vpc_cidr
+  vpc_secondary_cidrs = var.vpc_secondary_cidrs
+
   public_subnet_cidrs  = var.public_subnet_cidrs
   private_subnet_cidrs = var.private_subnet_cidrs
+
+  create_cluster_subnets = local.create_cluster_subnets
+  cluster_subnet_cidrs   = var.cluster_subnet_cidrs
 
   pod_spread_policy = var.pod_spread_policy
 }
@@ -45,8 +56,9 @@ module "cluster" {
   region       = var.region
   cluster_name = var.cluster_name
 
-  vpc_id             = var.create_network ? module.network.vpc_id : var.vpc_id
-  private_subnet_ids = var.create_network ? module.network.private_subnets : var.private_subnet_ids
+  vpc_id = var.create_network ? module.network.vpc_id : var.vpc_id
+
+  private_subnet_ids = local.create_cluster_subnets ? local.cluster_subnet_ids : local.private_subnet_ids
 
   kubernetes_version                 = var.kubernetes_version
   kubernetes_service_cidr            = var.kubernetes_service_cidr

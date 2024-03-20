@@ -15,6 +15,12 @@ variable "vpc_cidr" {
   description = "The CIDR of the cluster's VPC."
 }
 
+variable "vpc_secondary_cidrs" {
+  type        = list(string)
+  default     = null
+  description = "The secondary CIDRs of the cluster's VPC."
+}
+
 variable "public_subnet_cidrs" {
   type        = list(string)
   default     = []
@@ -24,7 +30,19 @@ variable "public_subnet_cidrs" {
 variable "private_subnet_cidrs" {
   type        = list(string)
   default     = []
-  description = "The CIDRs of the three private subnets. These will contain the EKS cluster's master ENIs, worker nodes, and internal load-balancer ENIs (if desired)."
+  description = "The CIDRs of the three private subnets. These will contain internal load-balancer ENIs (if desired). By default, these will also contain the EKS cluster's ENIs and worker nodes."
+}
+
+variable "create_cluster_subnets" {
+  type        = bool
+  default     = false
+  description = "When set to true, a third set of subnets is created that will contain the  EKS cluster's ENIs and worker nodes."
+}
+
+variable "cluster_subnet_cidrs" {
+  type        = list(string)
+  default     = null
+  description = "The CIDRs of the three cluster subnets, if desired. These will contain the EKS cluster's ENIs and worker nodes."
 }
 
 variable "pod_spread_policy" {

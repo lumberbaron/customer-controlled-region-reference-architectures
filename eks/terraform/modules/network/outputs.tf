@@ -9,3 +9,7 @@ output "public_subnets" {
 output "private_subnets" {
   value = var.create_network ? aws_subnet.private[*].id : null
 }
+
+output "cluster_subnets" {
+  value = var.create_network ? aws_subnet.cluster[*].id : null
+}
