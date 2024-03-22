@@ -3,6 +3,5 @@ data "http" "ip" {
 }
 
 resource "tls_private_key" "bastion" {
-  algorithm = "RSA"
-  rsa_bits  = 4096
+  algorithm = "ED25519"
 }

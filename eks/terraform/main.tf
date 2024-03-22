@@ -1,7 +1,6 @@
 locals {
-  create_cluster_subnets = var.create_network ? var.cluster_subnet_cidrs != null : var.cluster_subnet_ids != null
+  create_cluster_subnets = var.create_network && var.cluster_subnet_cidrs != null
   private_subnet_ids     = var.create_network ? module.network.private_subnets : var.private_subnet_ids
-  cluster_subnet_ids     = var.create_network ? module.network.cluster_subnets : var.cluster_subnet_ids
 }
 
 ################################################################################
@@ -31,12 +30,11 @@ module "network" {
 module "bastion" {
   source = "./modules/bastion"
 
-  cluster_name = var.cluster_name
+  cluster_name   = var.cluster_name
+  create_bastion = var.create_bastion
 
-  create_bastion = var.create_bastion && var.create_network
-
-  vpc_id    = var.create_network ? module.network.vpc_id : null
-  subnet_id = var.create_network ? module.network.public_subnets[2] : null
+  vpc_id    = var.create_network ? module.network.vpc_id : var.vpc_id
+  subnet_id = var.create_network ? module.network.public_subnets[2] : var.bastion_subnet_id
 
   bastion_public_access           = var.bastion_public_access
   bastion_ssh_authorized_networks = var.bastion_ssh_authorized_networks
@@ -56,7 +54,7 @@ module "cluster" {
 
   vpc_id = var.create_network ? module.network.vpc_id : var.vpc_id
 
-  private_subnet_ids = local.create_cluster_subnets ? local.cluster_subnet_ids : local.private_subnet_ids
+  private_subnet_ids = local.create_cluster_subnets ? module.network.cluster_subnets : local.private_subnet_ids
 
   kubernetes_version                 = var.kubernetes_version
   kubernetes_service_cidr            = var.kubernetes_service_cidr

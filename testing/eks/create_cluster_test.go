@@ -93,6 +93,7 @@ func TestTerraformEksClusterComplete(t *testing.T) {
 
 	storageClassPathGp2, _ := filepath.Abs("../../eks/kubernetes/storage-class-gp2.yaml")
 	storageClassPathGp3, _ := filepath.Abs("../../eks/kubernetes/storage-class-gp3.yaml")
+	storageClasses := [2]string{storageClassPathGp2, storageClassPathGp3}
 
 	configPath := common.CopyTerraform(t, "./configuration")
 	configOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
@@ -103,8 +104,7 @@ func TestTerraformEksClusterComplete(t *testing.T) {
 			"region":                               awsRegion,
 			"cluster_autoscaler_helm_values":       autoscalerValues,
 			"load_balancer_controller_helm_values": loadBalancerValues,
-			"storage_class_path_gp2":               storageClassPathGp2,
-			"storage_class_path_gp3":               storageClassPathGp3,
+			"storage_classes":                      storageClasses,
 			"cluster_autoscaler_version":           ClusterAutoscalerVersion,
 		},
 		Upgrade: true,
@@ -144,6 +144,7 @@ func TestTerraformEksClusterExternalNetwork(t *testing.T) {
 	terraform.InitAndApply(t, prereqOptions)
 
 	localCidr := []string{terraform.Output(t, prereqOptions, "local_cidr")}
+	bastionPublicKey := terraform.Output(t, prereqOptions, "bastion_ssh_public_key")
 
 	networkPath := common.CopyTerraform(t, "./network")
 	networkOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
@@ -162,6 +163,7 @@ func TestTerraformEksClusterExternalNetwork(t *testing.T) {
 	terraform.InitAndApply(t, networkOptions)
 
 	vpcId := terraform.Output(t, networkOptions, "vpc_id")
+	publicSubnets := terraform.OutputList(t, networkOptions, "public_subnets")
 	privateSubnets := terraform.OutputList(t, networkOptions, "private_subnets")
 
 	underTestPath := common.CopyTerraform(t, "../../eks/terraform")
@@ -175,7 +177,9 @@ func TestTerraformEksClusterExternalNetwork(t *testing.T) {
 			"create_network":                     false,
 			"vpc_id":                             vpcId,
 			"private_subnet_ids":                 privateSubnets,
-			"create_bastion":                     false,
+			"bastion_subnet_id":                  publicSubnets[0],
+			"bastion_ssh_authorized_networks":    localCidr,
+			"bastion_ssh_public_key":             bastionPublicKey,
 			"kubernetes_api_public_access":       true,
 			"kubernetes_api_authorized_networks": localCidr,
 		},
@@ -193,6 +197,7 @@ func TestTerraformEksClusterExternalNetwork(t *testing.T) {
 
 	storageClassPathGp2, _ := filepath.Abs("../../eks/kubernetes/storage-class-gp2.yaml")
 	storageClassPathGp3, _ := filepath.Abs("../../eks/kubernetes/storage-class-gp3.yaml")
+	storageClasses := [2]string{storageClassPathGp2, storageClassPathGp3}
 
 	configOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
 		TerraformDir: "./configuration",
@@ -202,8 +207,7 @@ func TestTerraformEksClusterExternalNetwork(t *testing.T) {
 			"region":                               awsRegion,
 			"cluster_autoscaler_helm_values":       autoscalerValues,
 			"load_balancer_controller_helm_values": loadBalancerValues,
-			"storage_class_path_gp2":               storageClassPathGp2,
-			"storage_class_path_gp3":               storageClassPathGp3,
+			"storage_classes":                      storageClasses,
 			"cluster_autoscaler_version":           ClusterAutoscalerVersion,
 		},
 		Upgrade: true,
@@ -214,6 +218,10 @@ func TestTerraformEksClusterExternalNetwork(t *testing.T) {
 	}
 
 	terraform.InitAndApply(t, configOptions)
+
+	bastionPublicIp := terraform.Output(t, underTestOptions, "bastion_public_ip")
+	bastionPrivateKey := terraform.Output(t, prereqOptions, "bastion_ssh_private_key")
+	common.TestSshToBastionHost(t, bastionPublicIp, "ec2-user", bastionPrivateKey)
 
 	testCluster(t, configOptions)
 }

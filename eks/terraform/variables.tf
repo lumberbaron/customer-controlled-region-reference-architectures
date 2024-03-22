@@ -60,12 +60,6 @@ variable "private_subnet_ids" {
   description = "When 'create_network' is set to false, the private subnet IDs must be provided."
 }
 
-variable "cluster_subnet_ids" {
-  type        = list(string)
-  default     = null
-  description = "When 'create_network' is set to false, the cluster subnet IDs must be provided if they are to be used."
-}
-
 ################################################################################
 # Bastion
 ################################################################################
@@ -74,6 +68,12 @@ variable "create_bastion" {
   type        = bool
   default     = true
   description = "Whether to create a bastion host. If Kubernetes API is private-only then a way to access it must be configured separately."
+}
+
+variable "bastion_subnet_id" {
+  type        = string
+  default     = null
+  description = "When 'create_network' is set to false, the bastion subnet ID must be provided if a bastion is to be created."
 }
 
 variable "bastion_public_access" {
