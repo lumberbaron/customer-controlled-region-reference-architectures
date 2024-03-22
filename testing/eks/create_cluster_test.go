@@ -40,6 +40,12 @@ func testCluster(t *testing.T, configOptions *terraform.Options) {
 	common.PrintTestComplete(t)
 }
 
+func getStorageClasses() []interface{} {
+	storageClassPathGp2, _ := filepath.Abs("../../eks/kubernetes/storage-class-gp2.yaml")
+	storageClassPathGp3, _ := filepath.Abs("../../eks/kubernetes/storage-class-gp3.yaml")
+	return []interface{}{map[string]interface{}{"name": "gp2-test", "path": storageClassPathGp2}, map[string]interface{}{"name": "gp3", "path": storageClassPathGp3}}
+}
+
 func TestTerraformEksClusterComplete(t *testing.T) {
 	t.Parallel()
 
@@ -91,10 +97,6 @@ func TestTerraformEksClusterComplete(t *testing.T) {
 	loadBalancerValues := terraform.Output(t, underTestOptions, "load_balancer_controller_helm_values")
 	autoscalerValues := terraform.Output(t, underTestOptions, "cluster_autoscaler_helm_values")
 
-	storageClassPathGp2, _ := filepath.Abs("../../eks/kubernetes/storage-class-gp2.yaml")
-	storageClassPathGp3, _ := filepath.Abs("../../eks/kubernetes/storage-class-gp3.yaml")
-	storageClasses := [2]string{storageClassPathGp2, storageClassPathGp3}
-
 	configPath := common.CopyTerraform(t, "./configuration")
 	configOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
 		TerraformDir: configPath,
@@ -104,7 +106,7 @@ func TestTerraformEksClusterComplete(t *testing.T) {
 			"region":                               awsRegion,
 			"cluster_autoscaler_helm_values":       autoscalerValues,
 			"load_balancer_controller_helm_values": loadBalancerValues,
-			"storage_classes":                      storageClasses,
+			"storage_classes":                      getStorageClasses(),
 			"cluster_autoscaler_version":           ClusterAutoscalerVersion,
 		},
 		Upgrade: true,
@@ -195,10 +197,6 @@ func TestTerraformEksClusterExternalNetwork(t *testing.T) {
 	loadBalancerValues := terraform.Output(t, underTestOptions, "load_balancer_controller_helm_values")
 	autoscalerValues := terraform.Output(t, underTestOptions, "cluster_autoscaler_helm_values")
 
-	storageClassPathGp2, _ := filepath.Abs("../../eks/kubernetes/storage-class-gp2.yaml")
-	storageClassPathGp3, _ := filepath.Abs("../../eks/kubernetes/storage-class-gp3.yaml")
-	storageClasses := [2]string{storageClassPathGp2, storageClassPathGp3}
-
 	configOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
 		TerraformDir: "./configuration",
 		NoColor:      true,
@@ -207,7 +205,7 @@ func TestTerraformEksClusterExternalNetwork(t *testing.T) {
 			"region":                               awsRegion,
 			"cluster_autoscaler_helm_values":       autoscalerValues,
 			"load_balancer_controller_helm_values": loadBalancerValues,
-			"storage_classes":                      storageClasses,
+			"storage_classes":                      getStorageClasses(),
 			"cluster_autoscaler_version":           ClusterAutoscalerVersion,
 		},
 		Upgrade: true,
